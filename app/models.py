@@ -2,11 +2,12 @@ from datetime import datetime, timezone
 from typing import Optional
 import sqlalchemy as sa
 import sqlalchemy.orm as so
-from app import db
+from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from app import login
 from hashlib import md5
+import re
+from sqlalchemy.orm import validates
 
 
 @login.user_loader
@@ -24,7 +25,7 @@ class User(UserMixin, db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique=True)
-    phone_number: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True, nullable=True)
+    phone_number: so.Mapped[str] = so.mapped_column(sa.String(16), index=True)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     posts: so.WriteOnlyMapped['Post'] = so.relationship(back_populates='author')
     about_me: so.Mapped[Optional[str]] = so.mapped_column(sa.String(140))
@@ -37,6 +38,7 @@ class User(UserMixin, db.Model):
         secondary=followers, primaryjoin=(followers.c.followed_id == id),
         secondaryjoin=(followers.c.follower_id == id),
         back_populates='following')
+    is_admin = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -50,6 +52,16 @@ class User(UserMixin, db.Model):
     def avatar(self, size):
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
         return f'https://www.gravatar.com/avatar/{digest}?d=identicon&s={size}'
+
+    @validates('phone_number')
+    def validate_phone_number(self, key, phone_number):
+        pattern = re.compile(r'^\+?\d{9,13}$')
+        if not pattern.match(phone_number):
+            raise ValueError("Phone number must contain only digits and may start with +")
+        # if not getattr(self, "is_admin", False):
+        #     if not phone_number.startswith("+380"):
+        #         raise ValueError("Regular users must enter a phone number starting with +380")
+        return phone_number
 
     def follow(self, user):
         if not self.is_following(user):
@@ -79,8 +91,12 @@ class User(UserMixin, db.Model):
         return (
             sa.select(Post)
             .join(Post.author.of_type(Author))
-            .join(Author.followers.of_type(Follower))
-            .where(Follower.id == self.id)
+            .join(Author.followers.of_type(Follower), isouter=True)
+            .where(sa.or_(
+                Follower.id == self.id,
+                Author.id == self.id,
+            ))
+            .group_by(Post)
             .order_by(Post.timestamp.desc())
         )
 
