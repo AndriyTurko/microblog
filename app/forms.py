@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
+from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length, Regexp
 import sqlalchemy as sa
 from app import db
 from app.models import User
@@ -17,6 +17,15 @@ class LoginForm(FlaskForm):
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
+    phone_number = StringField(
+        'Phone number'
+        # validators=[
+        #     DataRequired(),
+        #     Length(min=9, max=13),
+        #     Regexp(r'^\+?\d{9,13}$', message="Phone number must contain only digits and may start with +")
+        # ]
+    )
+    is_admin = BooleanField('Is_admin', default=False)
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
@@ -34,6 +43,14 @@ class RegistrationForm(FlaskForm):
 class EditProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     about_me = TextAreaField('About me', validators=[Length(min=0, max=140)])
+    phone_number = StringField(
+        'Phone number'
+        # validators=[
+        #     DataRequired(),
+        #     Length(min=9, max=13),
+        #     Regexp(r'^\+?\d{9,13}$', message="Phone number must contain only digits and may start with +")
+        # ]
+    )
     submit = SubmitField('Submit')
 
     def __init__(self, original_username, *args, **kwargs):
@@ -46,3 +63,13 @@ class EditProfileForm(FlaskForm):
                 User.username == self.username.data))
             if user is not None:
                 raise ValidationError('Please use a different username.')
+
+class EmptyForm(FlaskForm):
+    submit = SubmitField('Submit')
+
+class PostForm(FlaskForm):
+    post = TextAreaField('Say something', validators=[
+        DataRequired(), Length(min=1, max=140)])
+    submit = SubmitField('Submit')
+
+
