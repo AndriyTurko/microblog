@@ -38,6 +38,7 @@ class User(UserMixin, db.Model):
         secondary=followers, primaryjoin=(followers.c.followed_id == id),
         secondaryjoin=(followers.c.follower_id == id),
         back_populates='following')
+    4010
     is_admin = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
@@ -58,9 +59,9 @@ class User(UserMixin, db.Model):
         pattern = re.compile(r'^\+?\d{9,13}$')
         if not pattern.match(phone_number):
             raise ValueError("Phone number must contain only digits and may start with +")
-        # if not getattr(self, "is_admin", False):
-        #     if not phone_number.startswith("+380"):
-        #         raise ValueError("Regular users must enter a phone number starting with +380")
+        if not getattr(self, "is_admin", False):
+            if not phone_number.startswith("+380"):
+                raise ValueError("Regular users must enter a phone number starting with +380")
         return phone_number
 
     def follow(self, user):
