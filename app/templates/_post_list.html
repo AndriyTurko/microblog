@@ -1,0 +1,15 @@
+<table class="post-table">
+    <thead>
+        <tr>
+            <th>Avatar</th>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Post</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts %}
+            {% include '_post.html' %}
+        {% endfor %}
+    </tbody>
+</table>
