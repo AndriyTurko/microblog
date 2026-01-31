@@ -5,5 +5,15 @@
     <td>{{ post.author.username }}</td>
     <td>{{ post.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
     <td>{{ post.body }}</td>
+    {% if post.language and post.language != g.locale %}
+                <br><br>
+                <span id="translation{{ post.id }}">
+                    <a href="javascript:translate(
+                                'post{{ post.id }}',
+                                'translation{{ post.id }}',
+                                '{{ post.language }}',
+                                '{{ g.locale }}');">{{ _('Translate') }}</a>
+                </span>
+                {% endif %}
 </tr>
 

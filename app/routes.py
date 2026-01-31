@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request
-from app import app, db
+from app import app, db, get_locale
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, EmptyForm, PostForm, ResetPasswordRequestForm
 from flask_login import current_user, login_user, logout_user, login_required
 import sqlalchemy as sa
@@ -8,6 +8,9 @@ from urllib.parse import urlsplit
 from datetime import datetime, timezone
 from app.email import send_email
 from app.forms import ResetPasswordForm
+from langdetect import detect, LangDetectException
+from app.translate import translate
+
 
 
 
@@ -29,9 +32,15 @@ def base_post_list(template, query, endpoint, request, title=None, form=None, us
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+    from app.translate import translate
+    print(2222222222, translate('Hi, how are you today?', 'en', 'es'))
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(body=form.post.data, author=current_user)
+        try:
+            language = detect(form.post.data)
+        except LangDetectException:
+            language = ''
+        post = Post(body=form.post.data, author=current_user, language=language)
         db.session.add(post)
         db.session.commit()
         flash('Your post is now live!')
@@ -48,6 +57,7 @@ def index():
 @app.route('/user/<username>')
 @login_required
 def user(username):
+    print(11111111, get_locale())
     user = db.first_or_404(sa.select(User).where(User.username == username))
     query = user.posts.select().order_by(Post.timestamp.desc())
     return base_post_list(
@@ -208,4 +218,11 @@ def reset_password(token):
     return render_template('reset_password.html', form=form)
 
 
+@app.route('/translate', methods=['POST'])
+@login_required
+def translate_text():
+    data = request.get_json()
+    return {'text': translate(data['text'],
+                              data['source_language'],
+                              data['dest_language'])}
 

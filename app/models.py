@@ -60,9 +60,6 @@ class User(UserMixin, db.Model):
         pattern = re.compile(r'^\+?\d{9,13}$')
         if not pattern.match(phone_number):
             raise ValueError("Phone number must contain only digits and may start with +")
-        if not getattr(self, "is_admin", False):
-            if not phone_number.startswith("+380"):
-                raise ValueError("Regular users must enter a phone number starting with +380")
         return phone_number
 
     def follow(self, user):
@@ -123,6 +120,7 @@ class Post(db.Model):
     timestamp: so.Mapped[datetime] = so.mapped_column(index=True, default=lambda: datetime.now(timezone.utc))
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
     author: so.Mapped[User] = so.relationship(back_populates='posts')
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)

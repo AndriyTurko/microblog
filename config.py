@@ -14,12 +14,12 @@ class Config:
     # MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
     # MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
     MAIL_USE_TLS = False
-    # MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    # MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ADMINS = ['localh@email.com']
     POSTS_PER_PAGE = 5
-
-
+    LANGUAGES = ['en', 'es']
+    MS_TRANSLATOR_KEY = os.environ.get('MS_TRANSLATOR_KEY')
 
 
 
